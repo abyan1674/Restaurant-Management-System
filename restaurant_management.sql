@@ -1,0 +1,405 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               10.4.32-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.15.0.7171
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+
+-- Dumping database structure for restaurant_management
+CREATE DATABASE IF NOT EXISTS `restaurant_management` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
+USE `restaurant_management`;
+
+-- Dumping structure for table restaurant_management.categories
+CREATE TABLE IF NOT EXISTS `categories` (
+  `category_id` int(11) NOT NULL,
+  `name` varchar(20) DEFAULT NULL,
+  `display_order` int(11) DEFAULT NULL,
+  PRIMARY KEY (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table restaurant_management.categories: ~6 rows (approximately)
+INSERT INTO `categories` (`category_id`, `name`, `display_order`) VALUES
+	(1, 'Appetizers', 1),
+	(2, 'Main Courses', 2),
+	(3, 'Sides', 3),
+	(4, 'Desserts', 4),
+	(5, 'Beverages', 5),
+	(6, 'Specials', 6);
+
+-- Dumping structure for table restaurant_management.item_images
+CREATE TABLE IF NOT EXISTS `item_images` (
+  `image_id` int(11) NOT NULL AUTO_INCREMENT,
+  `menu_items_id` int(11) NOT NULL,
+  `image_url` varchar(255) NOT NULL,
+  `sort_order` tinyint(4) NOT NULL,
+  `is_primary` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`image_id`),
+  UNIQUE KEY `uq_menu_sort` (`menu_items_id`,`sort_order`),
+  CONSTRAINT `fk_itemimages_menuitems` FOREIGN KEY (`menu_items_id`) REFERENCES `menu_items` (`menu_items_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table restaurant_management.item_images: ~10 rows (approximately)
+INSERT INTO `item_images` (`image_id`, `menu_items_id`, `image_url`, `sort_order`, `is_primary`, `created_at`) VALUES
+	(1, 1, 'https://static01.nyt.com/images/2018/12/11/dining/as-garlic-bread/as-garlic-bread-googleFourByThree-v2.jpg', 0, 1, '2026-03-04 09:24:14'),
+	(2, 2, 'https://carlsbadcravings.com/wp-content/uploads/2025/01/Mozzarella-Sticks-18b.jpg', 0, 1, '2026-03-04 09:26:06'),
+	(3, 3, 'https://cdn.loveandlemons.com/wp-content/uploads/2025/05/bruschetta.jpg', 0, 1, '2026-03-04 09:29:12'),
+	(4, 4, 'https://www.dinneratthezoo.com/wp-content/uploads/2018/12/spinach-dip-5.jpg', 0, 1, '2026-03-04 09:29:12'),
+	(5, 5, 'https://www.aussiemeat.hk/cdn/shop/articles/24xxxx-Recipes-Shopify1080_520x500_085eff37-c277-4b67-88d2-f9bf22f147cf_600x.png?v=1750237761', 0, 1, '2026-03-04 09:29:12'),
+	(6, 6, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdveGBZWBSNWVl0R-TVzfYi5SaufirT0lcaA&s', 0, 1, '2026-03-04 09:29:12'),
+	(7, 7, 'https://www.allrecipes.com/thmb/luST0dBrTHwpSALZRvCTGgdh_88=/0x512/filters:no_upscale():max_bytes(150000):strip_icc()/276725-creamy-chicken-alfredo-VAT-001-Beauty-4x3-c4b026db5cb349f4b8fd627c56f91a42.jpg', 0, 1, '2026-03-04 09:29:12'),
+	(8, 8, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5cwRE4h3vfxnZPndGuyhmrWpgi_lk1w7KNg&s', 0, 1, '2026-03-04 09:29:12'),
+	(9, 9, 'https://thecozycook.com/wp-content/uploads/2020/02/Copycat-McDonalds-French-Fries-.jpg', 0, 1, '2026-03-04 09:29:12'),
+	(10, 10, 'https://www.recipeworkbook.com/wp-content/uploads/2021/09/onion-rings3-500x500.jpg', 0, 1, '2026-03-04 09:29:12');
+
+-- Dumping structure for table restaurant_management.menu_items
+CREATE TABLE IF NOT EXISTS `menu_items` (
+  `menu_items_id` int(11) NOT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `price` float DEFAULT NULL,
+  `image_url` varchar(50) DEFAULT NULL,
+  `is_available` int(11) DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`menu_items_id`),
+  KEY `FK_menu_items_categories` (`category_id`),
+  CONSTRAINT `FK_menu_items_categories` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table restaurant_management.menu_items: ~100 rows (approximately)
+INSERT INTO `menu_items` (`menu_items_id`, `name`, `description`, `price`, `image_url`, `is_available`, `category_id`) VALUES
+	(1, 'Garlic Bread', 'Toasted bread with garlic butter', 4.99, '/img/garlic_bread.jpg', 1, 1),
+	(2, 'Mozzarella Sticks', 'Deep fried cheese sticks with marinara', 6.99, '/img/mozz_sticks.jpg', 1, 1),
+	(3, 'Bruschetta', 'Grilled bread with tomato and basil', 5.49, '/img/bruschetta.jpg', 1, 1),
+	(4, 'Spinach Dip', 'Creamy spinach and artichoke dip', 7.99, '/img/spinach_dip.jpg', 0, 1),
+	(5, 'Grilled Salmon', 'Fresh salmon with roasted asparagus', 18.99, '/img/salmon.jpg', 1, 2),
+	(6, 'Ribeye Steak', '12oz USDA Prime ribeye', 24.99, '/img/steak.jpg', 1, 2),
+	(7, 'Chicken Alfredo', 'Fettuccine pasta in creamy sauce', 14.99, '/img/alfredo.jpg', 1, 2),
+	(8, 'Veggie Burger', 'Plant-based patty with house fries', 12.99, '/img/veggie_burger.jpg', 0, 2),
+	(9, 'French Fries', 'Crispy golden shoestring fries', 3.99, '/img/fries.jpg', 1, 3),
+	(10, 'Onion Rings', 'Battered and fried thick-cut onion rings', 4.99, '/img/onion_rings.jpg', 1, 3),
+	(11, 'Side Salad', 'Mixed greens with house vinaigrette', 4.49, '/img/side_salad.jpg', 1, 3),
+	(12, 'Mashed Potatoes', 'Creamy buttery mashed potatoes', 3.99, '/img/mashed_potatoes.jpg', 0, 3),
+	(13, 'Chocolate Cake', 'Rich dark chocolate layer cake', 6.99, '/img/choc_cake.jpg', 1, 4),
+	(14, 'Cheesecake', 'Classic New York style cheesecake', 7.49, '/img/cheesecake.jpg', 1, 4),
+	(15, 'Ice Cream Sundae', 'Vanilla ice cream with chocolate syrup', 5.99, '/img/sundae.jpg', 1, 4),
+	(16, 'Apple Pie', 'Warm apple pie with a cinnamon glaze', 5.49, '/img/apple_pie.jpg', 0, 4),
+	(17, 'Coca-Cola', 'Chilled fountain drink', 2.49, '/img/coke.jpg', 1, 5),
+	(18, 'Iced Tea', 'Freshly brewed unsweetened iced tea', 2.49, '/img/iced_tea.jpg', 1, 5),
+	(19, 'Lemonade', 'Sweet and tart freshly squeezed lemonade', 2.99, '/img/lemonade.jpg', 1, 5),
+	(20, 'Craft Beer', 'Local IPA on draft', 6.5, '/img/beer.jpg', 0, 5),
+	(21, 'Chef\'s Tasting', 'Five course seasonal tasting menu', 45, '/img/tasting.jpg', 1, 6),
+	(22, 'Surf and Turf', 'Filet mignon and lobster tail combo', 35, '/img/surf_turf.jpg', 1, 6),
+	(23, 'Truffle Pasta', 'Handmade pasta with black truffle', 22.99, '/img/truffle.jpg', 1, 6),
+	(24, 'Catch of the Day', 'Pan-seared seasonal white fish', 26, '/img/catch.jpg', 0, 6),
+	(25, 'Fried Calamari', 'Crispy fried squid rings with marinara', 8.99, '/img/calamari.jpg', 1, 1),
+	(26, 'Stuffed Mushrooms', 'Button mushrooms with herb cream cheese', 7.49, '/img/stuffed_mushrooms.jpg', 1, 1),
+	(27, 'Chicken Wings', 'Spicy buffalo wings with blue cheese', 9.99, '/img/wings.jpg', 1, 1),
+	(28, 'Nachos Supreme', 'Tortilla chips with cheese, jalapenos, and beef', 10.49, '/img/nachos.jpg', 0, 1),
+	(29, 'Pork Sliders', 'Three BBQ pulled pork mini sandwiches', 8.49, '/img/sliders.jpg', 1, 1),
+	(30, 'Caprese Salad', 'Fresh mozzarella, tomatoes, and balsamic', 6.99, '/img/caprese.jpg', 1, 1),
+	(31, 'Shrimp Cocktail', 'Chilled jumbo shrimp with cocktail sauce', 11.99, '/img/shrimp_cocktail.jpg', 1, 1),
+	(32, 'Spring Rolls', 'Crispy vegetable spring rolls', 5.99, '/img/spring_rolls.jpg', 0, 1),
+	(33, 'Edamame', 'Steamed soybeans with sea salt', 4.99, '/img/edamame.jpg', 1, 1),
+	(34, 'Beef Carpaccio', 'Thinly sliced raw beef with parmesan', 12.99, '/img/carpaccio.jpg', 1, 1),
+	(35, 'Cheese Board', 'Assorted artisanal cheeses and crackers', 14.99, '/img/cheese_board.jpg', 1, 1),
+	(36, 'Hummus Plate', 'Creamy hummus with warm pita bread', 6.49, '/img/hummus.jpg', 1, 1),
+	(37, 'Pork Chops', 'Grilled pork chops with apple chutney', 16.99, '/img/pork_chops.jpg', 1, 2),
+	(38, 'Spaghetti Bolognese', 'Traditional Italian meat sauce over pasta', 13.99, '/img/bolognese.jpg', 1, 2),
+	(39, 'Fish and Chips', 'Beer-battered cod with tartar sauce', 15.49, '/img/fish_chips.jpg', 0, 2),
+	(40, 'Chicken Parmesan', 'Breaded chicken breast topped with mozzarella', 14.99, '/img/chicken_parm.jpg', 1, 2),
+	(41, 'Pad Thai', 'Stir-fried rice noodles with shrimp and peanuts', 12.99, '/img/pad_thai.jpg', 1, 2),
+	(42, 'Lamb Shank', 'Braised lamb shank with root vegetables', 21.99, '/img/lamb_shank.jpg', 1, 2),
+	(43, 'Mushroom Risotto', 'Creamy Arborio rice with wild mushrooms', 14.49, '/img/risotto.jpg', 0, 2),
+	(44, 'BBQ Ribs', 'Half rack of slow-cooked baby back ribs', 19.99, '/img/ribs.jpg', 1, 2),
+	(45, 'Margherita Pizza', 'Classic pizza with fresh tomatoes and basil', 11.99, '/img/margherita.jpg', 1, 2),
+	(46, 'Pepperoni Pizza', 'Large pizza loaded with pepperoni', 13.99, '/img/pepperoni.jpg', 1, 2),
+	(47, 'Beef Stir Fry', 'Tender beef slices with broccoli and soy sauce', 15.99, '/img/stir_fry.jpg', 1, 2),
+	(48, 'Eggplant Parmesan', 'Baked breaded eggplant with cheese and marinara', 13.49, '/img/eggplant_parm.jpg', 0, 2),
+	(49, 'Sweet Potato Fries', 'Crispy sweet potato fries with aioli', 4.99, '/img/sweet_potato_fries.jpg', 1, 3),
+	(50, 'Coleslaw', 'Creamy cabbage and carrot slaw', 2.99, '/img/coleslaw.jpg', 1, 3),
+	(51, 'Garlic Green Beans', 'Sauteed green beans with minced garlic', 4.49, '/img/green_beans.jpg', 1, 3),
+	(52, 'Mac and Cheese', 'Three-cheese baked macaroni', 5.99, '/img/mac_cheese.jpg', 0, 3),
+	(53, 'Roasted Carrots', 'Honey-glazed roasted whole carrots', 3.99, '/img/roasted_carrots.jpg', 1, 3),
+	(54, 'Quinoa Salad', 'Refreshing quinoa with cucumber and feta', 4.99, '/img/quinoa.jpg', 1, 3),
+	(55, 'Baked Potato', 'Large potato with sour cream and chives', 3.49, '/img/baked_potato.jpg', 1, 3),
+	(56, 'Steamed Broccoli', 'Simple steamed broccoli florets', 3.49, '/img/broccoli.jpg', 0, 3),
+	(57, 'Corn on the Cob', 'Grilled corn with butter and paprika', 2.99, '/img/corn.jpg', 1, 3),
+	(58, 'Potato Salad', 'Classic mustard and egg potato salad', 3.99, '/img/potato_salad.jpg', 1, 3),
+	(59, 'Garlic Knots', 'Baked dough knots tossed in garlic butter', 4.49, '/img/garlic_knots.jpg', 1, 3),
+	(60, 'Roasted Brussels Sprouts', 'Crispy sprouts with bacon bits', 5.49, '/img/brussels_sprouts.jpg', 1, 3),
+	(61, 'Tiramisu', 'Classic Italian coffee-flavored dessert', 6.99, '/img/tiramisu.jpg', 1, 4),
+	(62, 'Brownie Sundae', 'Warm fudge brownie topped with vanilla ice cream', 7.49, '/img/brownie_sundae.jpg', 0, 4),
+	(63, 'Lemon Tart', 'Tangy lemon custard in a buttery shell', 5.99, '/img/lemon_tart.jpg', 1, 4),
+	(64, 'Panna Cotta', 'Creamy Italian dessert with berry compote', 6.49, '/img/panna_cotta.jpg', 1, 4),
+	(65, 'Key Lime Pie', 'Sweet and tart pie with graham cracker crust', 6.99, '/img/key_lime.jpg', 1, 4),
+	(66, 'Carrot Cake', 'Spiced cake with cream cheese frosting', 5.49, '/img/carrot_cake.jpg', 0, 4),
+	(67, 'Creme Brulee', 'Rich vanilla custard with caramelized sugar', 7.99, '/img/creme_brulee.jpg', 1, 4),
+	(68, 'Chocolate Mousse', 'Light and airy dark chocolate mousse', 6.49, '/img/mousse.jpg', 1, 4),
+	(69, 'Gelato Trio', 'Three scoops of assorted Italian gelato', 5.99, '/img/gelato.jpg', 1, 4),
+	(70, 'Banana Split', 'Classic banana split with three ice cream flavors', 8.49, '/img/banana_split.jpg', 0, 4),
+	(71, 'Churros', 'Fried dough pastry with chocolate dipping sauce', 5.49, '/img/churros.jpg', 1, 4),
+	(72, 'Red Velvet Cake', 'Distinctive red cake with cream cheese icing', 6.99, '/img/red_velvet.jpg', 1, 4),
+	(73, 'Sprite', 'Chilled fountain drink', 2.49, '/img/sprite.jpg', 1, 5),
+	(74, 'Dr Pepper', 'Chilled fountain drink', 2.49, '/img/dr_pepper.jpg', 0, 5),
+	(75, 'Sparkling Water', 'San Pellegrino sparkling mineral water', 3.5, '/img/sparkling_water.jpg', 1, 5),
+	(76, 'Apple Juice', '100% pure apple juice', 2.99, '/img/apple_juice.jpg', 1, 5),
+	(77, 'Orange Juice', 'Freshly squeezed orange juice', 3.49, '/img/orange_juice.jpg', 1, 5),
+	(78, 'Hot Coffee', 'Freshly brewed Colombian blend', 2.5, '/img/coffee.jpg', 1, 5),
+	(79, 'Espresso', 'Single shot of rich espresso', 2, '/img/espresso.jpg', 0, 5),
+	(80, 'Cappuccino', 'Espresso with steamed milk and foam', 3.5, '/img/cappuccino.jpg', 1, 5),
+	(81, 'Green Tea', 'Hot steeped green tea', 2.5, '/img/green_tea.jpg', 1, 5),
+	(82, 'Milkshake', 'Thick chocolate or vanilla milkshake', 4.99, '/img/milkshake.jpg', 1, 5),
+	(83, 'Root Beer Float', 'Vanilla ice cream in cold root beer', 4.49, '/img/root_beer_float.jpg', 1, 5),
+	(84, 'House Red Wine', 'Glass of house cabernet sauvignon', 7, '/img/red_wine.jpg', 0, 5),
+	(85, 'House White Wine', 'Glass of house chardonnay', 7, '/img/white_wine.jpg', 1, 5),
+	(86, 'Margarita', 'Classic lime margarita on the rocks', 8.5, '/img/margarita.jpg', 1, 5),
+	(87, 'Mojito', 'Rum, mint, lime, and soda water', 8.5, '/img/mojito.jpg', 1, 5),
+	(88, 'Wagyu Burger', 'Premium Wagyu beef patty with truffle mayo', 22, '/img/wagyu_burger.jpg', 1, 6),
+	(89, 'Lobster Ravioli', 'Handmade ravioli stuffed with lobster', 24.5, '/img/lobster_ravioli.jpg', 0, 6),
+	(90, 'Duck Confit', 'Slow-cooked duck leg with roasted potatoes', 26, '/img/duck_confit.jpg', 1, 6),
+	(91, 'Scallop Risotto', 'Pan-seared sea scallops over creamy risotto', 28, '/img/scallop_risotto.jpg', 1, 6),
+	(92, 'Tomahawk Steak', '32oz bone-in ribeye for two', 75, '/img/tomahawk.jpg', 1, 6),
+	(93, 'Oysters Rockefeller', 'Baked oysters with spinach and cheese', 18, '/img/oysters.jpg', 0, 6),
+	(94, 'Veal Oscar', 'Veal cutlets topped with crab meat and asparagus', 32, '/img/veal_oscar.jpg', 1, 6),
+	(95, 'Seafood Paella', 'Traditional Spanish rice dish with mixed seafood', 29, '/img/paella.jpg', 1, 6),
+	(96, 'Beef Wellington', 'Beef tenderloin coated in pate and puff pastry', 38, '/img/wellington.jpg', 0, 6),
+	(97, 'Chilean Sea Bass', 'Pan-roasted sea bass with miso glaze', 34, '/img/sea_bass.jpg', 1, 6),
+	(98, 'Rack of Lamb', 'Herb-crusted rack of lamb with mint reduction', 36, '/img/rack_of_lamb.jpg', 1, 6),
+	(99, 'Caviar Tasting', 'Selection of premium caviars with blinis', 85, '/img/caviar.jpg', 1, 6),
+	(100, 'White Truffle Gnocchi', 'Potato gnocchi shaved with fresh white truffle', 45, '/img/white_truffle.jpg', 0, 6);
+
+-- Dumping structure for table restaurant_management.order_items
+CREATE TABLE IF NOT EXISTS `order_items` (
+  `order_items_id` int(11) NOT NULL,
+  `order_id` int(11) DEFAULT NULL,
+  `quantity` int(11) DEFAULT NULL,
+  `unit_price` decimal(20,6) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `menu_items_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`order_items_id`),
+  KEY `FK_order_items_menu_items` (`menu_items_id`),
+  CONSTRAINT `FK_order_items_menu_items` FOREIGN KEY (`menu_items_id`) REFERENCES `menu_items` (`menu_items_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table restaurant_management.order_items: ~110 rows (approximately)
+INSERT INTO `order_items` (`order_items_id`, `order_id`, `quantity`, `unit_price`, `created_at`, `menu_items_id`) VALUES
+	(1, NULL, 2, 14.990000, '2026-01-25 12:30:00', 7),
+	(2, NULL, 1, 15.520000, '2026-01-25 12:30:00', 39),
+	(3, NULL, 1, 18.990000, '2026-01-25 13:15:00', 5),
+	(4, NULL, 1, 2.490000, '2026-01-25 13:15:00', 17),
+	(5, NULL, 2, 12.000000, '2026-01-26 18:45:00', 45),
+	(6, NULL, 2, 4.200000, '2026-01-26 18:45:00', 9),
+	(7, NULL, 2, 35.000000, '2026-01-26 19:30:00', 22),
+	(8, NULL, 1, 15.000000, '2026-01-26 19:30:00', 85),
+	(9, NULL, 1, 24.500000, '2026-01-27 11:20:00', 89),
+	(10, NULL, 1, 4.990000, '2026-01-27 11:20:00', 10),
+	(11, NULL, 2, 16.990000, '2026-01-28 12:05:00', 37),
+	(12, NULL, 1, 8.020000, '2026-01-28 12:05:00', 25),
+	(13, NULL, 1, 12.990000, '2026-01-28 14:30:00', 8),
+	(14, NULL, 1, 2.510000, '2026-01-28 14:30:00', 78),
+	(15, NULL, 3, 24.990000, '2026-01-29 19:00:00', 6),
+	(16, NULL, 2, 17.640000, '2026-01-29 19:00:00', 84),
+	(17, NULL, 1, 22.990000, '2026-01-30 18:20:00', 23),
+	(18, NULL, 1, 5.760000, '2026-01-30 18:20:00', 15),
+	(19, NULL, 2, 26.000000, '2026-01-31 20:15:00', 90),
+	(20, NULL, 2, 6.900000, '2026-01-31 20:15:00', 61),
+	(21, NULL, 1, 8.990000, '2026-02-01 13:40:00', 25),
+	(22, NULL, 1, 3.010000, '2026-02-01 13:40:00', 19),
+	(23, NULL, 2, 21.990000, '2026-02-01 19:10:00', 42),
+	(24, NULL, 1, 10.520000, '2026-02-01 19:10:00', 31),
+	(25, NULL, 2, 34.000000, '2026-02-02 18:30:00', 97),
+	(26, NULL, 1, 20.000000, '2026-02-02 18:30:00', 23),
+	(27, NULL, 2, 14.990000, '2026-02-03 12:45:00', 40),
+	(28, NULL, 1, 5.270000, '2026-02-03 12:45:00', 54),
+	(29, NULL, 1, 15.990000, '2026-02-03 17:50:00', 47),
+	(30, NULL, 2, 3.000000, '2026-02-03 17:50:00', 19),
+	(31, NULL, 1, 35.000000, '2026-02-04 18:05:00', 22),
+	(32, NULL, 1, 6.300000, '2026-02-04 18:05:00', 68),
+	(33, NULL, 2, 45.000000, '2026-02-05 20:00:00', 21),
+	(34, NULL, 2, 20.000000, '2026-02-05 20:00:00', 84),
+	(35, NULL, 2, 18.990000, '2026-02-06 13:20:00', 5),
+	(36, NULL, 2, 4.910000, '2026-02-06 13:20:00', 33),
+	(37, NULL, 1, 28.000000, '2026-02-07 19:40:00', 91),
+	(38, NULL, 1, 10.500000, '2026-02-07 19:40:00', 28),
+	(39, NULL, 1, 14.990000, '2026-02-08 14:15:00', 7),
+	(40, NULL, 1, 5.000000, '2026-02-08 14:15:00', 1),
+	(41, NULL, 2, 32.000000, '2026-02-08 19:10:00', 94),
+	(42, NULL, 1, 11.500000, '2026-02-08 19:10:00', 31),
+	(43, NULL, 1, 22.000000, '2026-02-09 18:25:00', 88),
+	(44, NULL, 1, 7.000000, '2026-02-09 18:25:00', 85),
+	(45, NULL, 1, 45.000000, '2026-02-10 12:50:00', 100),
+	(46, NULL, 2, 5.000000, '2026-02-10 12:50:00', 9),
+	(47, NULL, 1, 11.990000, '2026-02-10 16:30:00', 45),
+	(48, NULL, 1, 2.510000, '2026-02-10 16:30:00', 17),
+	(49, NULL, 2, 38.000000, '2026-02-11 20:20:00', 96),
+	(50, NULL, 2, 8.200000, '2026-02-11 20:20:00', 2),
+	(51, NULL, 2, 22.990000, '2026-02-12 19:05:00', 23),
+	(52, NULL, 1, 10.000000, '2026-02-12 19:05:00', 3),
+	(53, NULL, 1, 5.220000, '2026-02-12 19:05:00', 54),
+	(54, NULL, 2, 18.990000, '2026-02-13 13:10:00', 5),
+	(55, NULL, 1, 5.000000, '2026-02-13 13:10:00', 11),
+	(56, NULL, 1, 5.020000, '2026-02-13 13:10:00', 33),
+	(57, NULL, 1, 15.990000, '2026-02-13 17:45:00', 47),
+	(58, NULL, 1, 6.000000, '2026-02-13 17:45:00', 13),
+	(59, NULL, 1, 3.510000, '2026-02-13 17:45:00', 75),
+	(60, NULL, 1, 24.990000, '2026-02-14 18:30:00', 6),
+	(61, NULL, 1, 5.000000, '2026-02-14 18:30:00', 10),
+	(62, NULL, 1, 3.810000, '2026-02-14 18:30:00', 12),
+	(63, NULL, 2, 45.000000, '2026-02-14 20:00:00', 21),
+	(64, NULL, 1, 35.000000, '2026-02-14 20:00:00', 22),
+	(65, NULL, 2, 10.000000, '2026-02-14 20:00:00', 85),
+	(66, NULL, 2, 26.000000, '2026-02-15 14:20:00', 90),
+	(67, NULL, 1, 14.000000, '2026-02-15 14:20:00', 84),
+	(68, NULL, 1, 6.500000, '2026-02-15 14:20:00', 20),
+	(69, NULL, 2, 16.990000, '2026-02-16 19:15:00', 37),
+	(70, NULL, 1, 6.000000, '2026-02-16 19:15:00', 68),
+	(71, NULL, 2, 2.460000, '2026-02-16 19:15:00', 18),
+	(72, NULL, 1, 12.990000, '2026-02-17 12:35:00', 8),
+	(73, NULL, 1, 2.500000, '2026-02-17 12:35:00', 78),
+	(74, NULL, 1, 2.510000, '2026-02-17 12:35:00', 81),
+	(75, NULL, 2, 34.000000, '2026-02-17 19:50:00', 97),
+	(76, NULL, 1, 14.990000, '2026-02-17 19:50:00', 35),
+	(77, NULL, 1, 7.000000, '2026-02-17 19:50:00', 85),
+	(78, NULL, 2, 19.990000, '2026-02-18 18:40:00', 44),
+	(79, NULL, 1, 8.000000, '2026-02-18 18:40:00', 2),
+	(80, NULL, 1, 4.020000, '2026-02-18 18:40:00', 9),
+	(81, NULL, 2, 38.000000, '2026-02-19 20:10:00', 96),
+	(82, NULL, 1, 20.000000, '2026-02-19 20:10:00', 23),
+	(83, NULL, 1, 9.500000, '2026-02-19 20:10:00', 84),
+	(84, NULL, 1, 14.990000, '2026-02-20 13:25:00', 7),
+	(85, NULL, 1, 4.000000, '2026-02-20 13:25:00', 11),
+	(86, NULL, 1, 2.510000, '2026-02-20 13:25:00', 17),
+	(87, NULL, 2, 13.990000, '2026-02-20 19:30:00', 38),
+	(88, NULL, 1, 6.000000, '2026-02-20 19:30:00', 63),
+	(89, NULL, 1, 3.820000, '2026-02-20 19:30:00', 58),
+	(90, NULL, 2, 26.000000, '2026-02-21 18:45:00', 24),
+	(91, NULL, 1, 10.000000, '2026-02-21 18:45:00', 3),
+	(92, NULL, 1, 6.000000, '2026-02-21 18:45:00', 69),
+	(93, NULL, 1, 22.990000, '2026-02-22 12:50:00', 23),
+	(94, NULL, 1, 15.000000, '2026-02-22 12:50:00', 39),
+	(95, NULL, 1, 7.210000, '2026-02-22 12:50:00', 67),
+	(96, NULL, 1, 14.490000, '2026-02-22 16:15:00', 43),
+	(97, NULL, 1, 8.000000, '2026-02-22 16:15:00', 29),
+	(98, NULL, 1, 5.010000, '2026-02-22 16:15:00', 49),
+	(99, NULL, 2, 16.990000, '2026-02-23 18:55:00', 37),
+	(100, NULL, 1, 10.000000, '2026-02-23 18:55:00', 27),
+	(101, NULL, 1, 6.010000, '2026-02-23 18:55:00', 64),
+	(102, NULL, 2, 45.000000, '2026-02-24 19:20:00', 21),
+	(103, NULL, 1, 15.000000, '2026-02-24 19:20:00', 35),
+	(104, NULL, 1, 10.000000, '2026-02-24 19:20:00', 27),
+	(105, NULL, 1, 11.990000, '2026-02-24 20:05:00', 45),
+	(106, NULL, 1, 4.810000, '2026-02-24 20:05:00', 54),
+	(107, NULL, 1, 24.500000, '2026-02-24 20:30:00', 89),
+	(108, NULL, 1, 7.000000, '2026-02-24 20:30:00', 84),
+	(109, NULL, 1, 3.000000, '2026-02-24 20:30:00', 19),
+	(110, NULL, 2, 41.000000, '2026-02-25 12:15:00', 92);
+
+-- Dumping structure for table restaurant_management.orders
+CREATE TABLE IF NOT EXISTS `orders` (
+  `order_id` int(11) NOT NULL,
+  `order__type` varchar(20) DEFAULT NULL,
+  `status` varchar(20) DEFAULT NULL,
+  `total_amount` decimal(20,6) DEFAULT NULL,
+  `payment_method` varchar(20) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`order_id`),
+  KEY `FK_orders_users` (`user_id`),
+  CONSTRAINT `FK_orders_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table restaurant_management.orders: ~51 rows (approximately)
+INSERT INTO `orders` (`order_id`, `order__type`, `status`, `total_amount`, `payment_method`, `created_at`, `user_id`) VALUES
+	(0, NULL, 'Completed', 9.980000, 'Cash', '2026-03-31 09:13:47', 5),
+	(1, 'NULL', 'Completed', 45.500000, 'Credit Card', '2026-01-25 12:30:00', 4),
+	(2, 'NULL', 'Completed', 18.990000, 'Cash', '2026-01-25 13:15:00', 8),
+	(3, 'NULL', 'Completed', 32.400000, 'Mobile Pay', '2026-01-26 18:45:00', 5),
+	(4, 'NULL', 'Completed', 85.000000, 'Credit Card', '2026-01-26 19:30:00', 6),
+	(5, 'NULL', 'Cancelled', 24.500000, 'Credit Card', '2026-01-27 11:20:00', 9),
+	(6, 'NULL', 'Completed', 42.000000, 'Mobile Pay', '2026-01-28 12:05:00', 7),
+	(7, 'NULL', 'Completed', 15.500000, 'Cash', '2026-01-28 14:30:00', 10),
+	(8, 'NULL', 'Completed', 110.250000, 'Credit Card', '2026-01-29 19:00:00', 4),
+	(9, 'NULL', 'Completed', 28.750000, 'Mobile Pay', '2026-01-30 18:20:00', 5),
+	(10, 'NULL', 'Completed', 65.800000, 'Credit Card', '2026-01-31 20:15:00', 11),
+	(11, 'NULL', 'Cancelled', 12.000000, 'Cash', '2026-02-01 13:40:00', 8),
+	(12, 'NULL', 'Completed', 54.500000, 'Mobile Pay', '2026-02-01 19:10:00', 6),
+	(13, 'NULL', 'Completed', 88.000000, 'Credit Card', '2026-02-02 18:30:00', 7),
+	(14, 'NULL', 'Completed', 35.250000, 'Cash', '2026-02-03 12:45:00', 12),
+	(15, 'NULL', 'Completed', 22.000000, 'Mobile Pay', '2026-02-03 17:50:00', 5),
+	(16, 'NULL', 'Cancelled', 41.300000, 'Credit Card', '2026-02-04 18:05:00', 9),
+	(17, 'NULL', 'Completed', 130.000000, 'Credit Card', '2026-02-05 20:00:00', 4),
+	(18, 'NULL', 'Completed', 47.800000, 'Cash', '2026-02-06 13:20:00', 10),
+	(19, 'NULL', 'Completed', 38.500000, 'Mobile Pay', '2026-02-07 19:40:00', 6),
+	(20, 'NULL', 'Completed', 19.990000, 'Cash', '2026-02-08 14:15:00', 11),
+	(21, 'NULL', 'Completed', 75.500000, 'Credit Card', '2026-02-08 19:10:00', 7),
+	(22, 'NULL', 'Completed', 29.000000, 'Mobile Pay', '2026-02-09 18:25:00', 8),
+	(23, 'NULL', 'Cancelled', 55.000000, 'Credit Card', '2026-02-10 12:50:00', 12),
+	(24, 'NULL', 'Completed', 14.500000, 'Cash', '2026-02-10 16:30:00', 5),
+	(25, 'NULL', 'Completed', 92.400000, 'Credit Card', '2026-02-11 20:20:00', 4),
+	(26, 'NULL', 'Completed', 61.200000, 'Mobile Pay', '2026-02-12 19:05:00', 9),
+	(27, 'NULL', 'Completed', 48.000000, 'Cash', '2026-02-13 13:10:00', 6),
+	(28, 'NULL', 'Completed', 25.500000, 'Credit Card', '2026-02-13 17:45:00', 10),
+	(29, 'NULL', 'Cancelled', 33.800000, 'Mobile Pay', '2026-02-14 18:30:00', 7),
+	(30, 'NULL', 'Completed', 145.000000, 'Credit Card', '2026-02-14 20:00:00', 11),
+	(31, 'NULL', 'Completed', 72.500000, 'Cash', '2026-02-15 14:20:00', 8),
+	(32, 'NULL', 'Completed', 44.900000, 'Mobile Pay', '2026-02-16 19:15:00', 4),
+	(33, 'NULL', 'Completed', 18.000000, 'Cash', '2026-02-17 12:35:00', 12),
+	(34, 'NULL', 'Completed', 89.990000, 'Credit Card', '2026-02-17 19:50:00', 5),
+	(35, 'NULL', 'Completed', 52.000000, 'Mobile Pay', '2026-02-18 18:40:00', 9),
+	(36, 'NULL', 'Completed', 105.500000, 'Credit Card', '2026-02-19 20:10:00', 6),
+	(37, 'NULL', 'Cancelled', 21.500000, 'Cash', '2026-02-20 13:25:00', 10),
+	(38, 'NULL', 'Completed', 37.800000, 'Mobile Pay', '2026-02-20 19:30:00', 7),
+	(39, 'NULL', 'Completed', 68.000000, 'Credit Card', '2026-02-21 18:45:00', 11),
+	(40, 'NULL', 'Completed', 45.200000, 'Cash', '2026-02-22 12:50:00', 8),
+	(41, 'NULL', 'Completed', 27.500000, 'Credit Card', '2026-02-22 16:15:00', 4),
+	(42, 'NULL', 'Completed', 49.990000, 'Mobile Pay', '2026-02-23 18:55:00', 12),
+	(43, 'NULL', 'Pending', 115.000000, 'Credit Card', '2026-02-24 19:20:00', 5),
+	(44, 'NULL', 'Completed', 16.800000, 'Cash', '2026-02-24 20:05:00', 9),
+	(45, 'NULL', 'Pending', 34.500000, 'Mobile Pay', '2026-02-24 20:30:00', 6),
+	(46, 'NULL', 'Pending', 82.000000, 'Credit Card', '2026-02-25 12:15:00', 10),
+	(47, 'NULL', 'Pending', 55.400000, 'Cash', '2026-02-25 13:00:00', 7),
+	(48, 'NULL', 'Pending', 23.900000, 'Credit Card', '2026-02-25 13:45:00', 11),
+	(49, 'NULL', 'Pending', 41.200000, 'Mobile Pay', '2026-02-25 14:10:00', 8),
+	(50, 'NULL', 'Pending', 95.000000, 'Credit Card', '2026-02-25 14:25:00', 4);
+
+-- Dumping structure for table restaurant_management.users
+CREATE TABLE IF NOT EXISTS `users` (
+  `user_id` int(11) NOT NULL,
+  `username` varchar(20) DEFAULT NULL,
+  `password_hash` varchar(50) DEFAULT NULL,
+  `role` varchar(20) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table restaurant_management.users: ~12 rows (approximately)
+INSERT INTO `users` (`user_id`, `username`, `password_hash`, `role`, `created_at`) VALUES
+	(1, 'admin_super', '5e884898da28047151d0e56f8dc62927', 'admin', '2026-01-05 08:30:00'),
+	(2, 'staff_sarah', 'a1d0c6e83f027327d8461063f4ac58a6', 'staff', '2026-01-06 09:15:00'),
+	(3, 'staff_david', '9d4e1e23bd5b727046a9e3b4b7db57bd', 'staff', '2026-01-06 09:45:00'),
+	(4, 'john_doe', '21232f297a57a5a743894a0e4a801fc3', 'customer', '2026-01-10 12:20:00'),
+	(5, 'emily_r', '8d969eef6ecad3c29a3a629280e686cf', 'customer', '2026-01-12 18:05:00'),
+	(6, 'michael_t', 'e10adc3949ba59abbe56e057f20f883e', 'customer', '2026-01-15 19:30:00'),
+	(7, 'jessica_w', 'b59c67bf196a4758191e42f76670ceba', 'customer', '2026-01-20 13:45:00'),
+	(8, 'guest_9942', 'd41d8cd98f00b204e9800998ecf8427e', 'guest', '2026-02-01 11:10:00'),
+	(9, 'guest_3184', '3b5d5c3712955042212316173ccf37be', 'guest', '2026-02-05 14:25:00'),
+	(10, 'guest_7721', 'c33367701511b4f6020ec61ded352059', 'guest', '2026-02-12 18:50:00'),
+	(11, 'guest_5093', '0cc175b9c0f1b6a831c399e269772661', 'guest', '2026-02-18 19:15:00'),
+	(12, 'guest_2281', '92eb5ffee6ae2fec3ad71c777531578f', 'guest', '2026-02-22 20:05:00');
+
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
