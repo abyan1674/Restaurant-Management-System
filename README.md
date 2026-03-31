@@ -1,9 +1,76 @@
-🍽️ Streamlit Restaurant Management SystemA lightweight, fully functional Restaurant Point of Sale (POS) and Management System built with Python, Streamlit, and MySQL.This application provides a seamless interface for restaurant staff to process orders and track their status, while giving administrators powerful tools to manage the menu, track business analytics, and manage employee access.✨ Features🔐 Role-Based Access Control (RBAC): Distinct dashboards for Admins and Staff.🛒 Interactive POS System: Browse menus, filter by category/price, search by name, and manage a dynamic shopping cart.📋 Order Tracking: Real-time tracking of pending, preparing, served, and completed orders.🛠️ Menu Management (Admin): Add new categories, upload food item images, update prices, and mark items as "Out of Stock".📈 Business Dashboard (Admin): View total revenue, top-selling items, and order status distributions via interactive charts.👥 User Management (Admin): Create new staff or admin accounts with secure password hashing.🚀 PrerequisitesBefore you begin, ensure you have the following installed on your local machine:Python 3.8+MySQL Server: You can use tools like XAMPP, WAMP, or MAMP to easily run a local MySQL server.Git (Optional, for version control)🛠️ Local Setup Instructions1. Database ConfigurationOpen your MySQL management tool (e.g., phpMyAdmin via XAMPP).Create a new database named restaurant_management.Import your exported SQL database file (e.g., restaurant_management.sql) to generate the users, categories, menu_items, item_images, orders, and order_items tables.If your MySQL root user has a password, update the DB_CONFIG dictionary at the top of the app.py file to match your credentials:DB_CONFIG = {
+# 🍽️ Streamlit Restaurant Management System
+
+A lightweight Restaurant Point of Sale (POS) and Management System built with Python, Streamlit, and MySQL.
+
+It provides a responsive interface for staff to process orders and monitor statuses, while admins can manage menu items, view analytics, and control user permissions.
+
+---
+
+## ✨ Features
+
+- 🔐 Role-Based Access Control (RBAC): Admin and Staff dashboards with different privileges.
+- 🛒 Interactive POS System: menu browsing, category/price filters, name search, and cart management.
+- 📋 Order Tracking: pending, preparing, served, and completed order states.
+- 🛠️ Admin Menu Management: add categories, upload item images, update prices, set Out of Stock.
+- 📈 Business Dashboard: revenue, top-sellers, and order status distribution charts.
+- 👥 User Management: create staff/admin accounts with secure password hashing.
+
+---
+
+## 🚀 Prerequisites
+
+- Python 3.8+
+- MySQL Server (local install via XAMPP/WAMP/MAMP, or native MySQL)
+- Git (optional)
+
+---
+
+## 🛠️ Local Setup
+
+### 1) Database setup
+
+1. Create database: `restaurant_management`.
+2. Import SQL schema + test data from `restaurant_management.sql`.
+3. Update DB settings in `app.py` (`DB_CONFIG`) to match your credentials:
+
+```python
+DB_CONFIG = {
     "host": "localhost",
-    "user": "root",       # Your MySQL username
-    "password": "",       # Your MySQL password
+    "user": "root",       # MySQL username
+    "password": "",       # MySQL password
     "database": "restaurant_management"
 }
-2. Install DependenciesOpen your terminal in the project directory and install the required Python packages:pip install -r requirements.txt
-3. Run the ApplicationStart the Streamlit server by running:streamlit run app.py
-The application will automatically open in your default web browser at http://localhost:8501.🔑 Default Test AccountsBased on the default database setup, you can log in using the following roles to test the system:Admin Access:Username: admin_super(Use the password you defined in your database for this user)Staff Access:Username: staff_sarah(Use the password you defined in your database for this user)🤝 How to Share This Project with PeersIf you are working on a group project or want to share this app, you have two options:Option A: Share Locally (Best for Group Development)If your peers need to see the code and run the app on their own computers:Go to phpMyAdmin, select your restaurant_management database, and click Export to download a .sql file.Put the .sql file, app.py, requirements.txt, and your static/img folder into a single ZIP file.Send the ZIP file to your peers.Instructions for peers: They must create a restaurant_management database in their own local phpMyAdmin, import your .sql file, run pip install -r requirements.txt, and finally run streamlit run app.py.Option B: Deploy to the Cloud (Best for End-Users/Presentations)If you want to give your peers a simple web link that they can open on their phones or laptops without installing anything:Host the Database: Move your local MySQL database to a free cloud database provider (like Aiven, TiDB, or PythonAnywhere). Update the DB_CONFIG in app.py with your new cloud credentials.Host the App: Push your code (app.py and requirements.txt) to a public GitHub repository.Deploy: Go to Streamlit Community Cloud, sign in with GitHub, select your repository, and deploy! Streamlit will give you a public URL to share.
+```
+
+### 2) Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3) Run the app
+
+```bash
+streamlit run app.py
+```
+
+---
+
+## 🔑 Default test accounts
+
+- Admin: `admin_super`
+- Password: `5e884898da28047151d0e56f8dc62927`
+
+- Staff: `staff_sarah`
+- Password: `a1d0c6e83f027327d8461063f4ac58a6`
+
+- Customer: `emily_r`
+- Password: `8d969eef6ecad3c29a3a629280e686cf`
+
+---
+
+## 🧩 Notes
+
+- Ensure MySQL connection credentials are correct in `app.py`.
+- If you have streamlit port conflict, use `streamlit run app.py --server.port 8502`.
+- If you need to regenerate the database, drop the `restaurant_management` DB and re-import the `.sql` file.
