@@ -11,8 +11,8 @@ import datetime
 # ==========================================
 DB_CONFIG = {
     "host": "localhost",
-    "user": "root",
-    "password": "",
+    "user": "root",       # Update with your MySQL username
+    "password": "",       # Update with your MySQL password
     "database": "restaurant_management"
 }
 
@@ -76,7 +76,6 @@ def login_page():
         submitted = st.form_submit_button("Login")
         
         if submitted:
-            # Note: No indents used for SELECT command based on your instructions
             query = "SELECT * FROM users WHERE username = %s"
             users = run_query(query, (username,))
             
@@ -95,6 +94,32 @@ def login_page():
                     st.error("Invalid password")
             else:
                 st.error("User not found")
+                
+    st.divider()
+    st.subheader("No Account?")
+    if st.button("Continue as Guest / Customer", use_container_width=True):
+        query_guest = "SELECT * FROM users WHERE username = 'Guest' LIMIT 1"
+        guests = run_query(query_guest)
+        
+        if guests:
+            user = guests[0]
+            st.session_state.logged_in = True
+            st.session_state.user_id = user['user_id']
+            st.session_state.username = user['username']
+            st.session_state.role = user['role']
+            st.rerun()
+        else:
+            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            insert_g = "INSERT INTO users (username, password_hash, role, created_at) VALUES (%s, %s, %s, %s)"
+            guest_id = run_query(insert_g, ('Guest', hash_password('guest_pass_123'), 'customer', now), fetch=False, commit=True)
+            if guest_id:
+                st.session_state.logged_in = True
+                st.session_state.user_id = guest_id
+                st.session_state.username = 'Guest'
+                st.session_state.role = 'customer'
+                st.rerun()
+            else:
+                st.error("Failed to create guest session.")
 
 def logout():
     st.session_state.logged_in = False
@@ -179,7 +204,6 @@ def admin_menu_management():
         st.subheader("Update Availability")
         st.write("Mark items as 'Out of Stock' or update their prices.")
         
-        # Note: No indents for SELECT command
         menu_query_update = "SELECT menu_items_id, name, price, is_available FROM menu_items"
         items_to_update = run_query(menu_query_update)
         
@@ -223,7 +247,6 @@ def pos_system():
             df = pd.DataFrame(items)
             categories = df['category_name'].unique()
             
-            # --- NEW: ADVANCED FILTERS ---
             st.subheader("Filter Menu")
             col_f1, col_f2, col_f3 = st.columns(3)
             with col_f1:
@@ -319,7 +342,7 @@ def process_checkout(total_amount, payment_method):
     
     # 1. Insert into orders table
     order_q = "INSERT INTO orders (status, total_amount, payment_method, created_at, user_id) VALUES (%s, %s, %s, %s, %s)"
-    order_id = run_query(order_q, ("Completed", total_amount, payment_method, now, st.session_state.user_id), fetch=False, commit=True)
+    order_id = run_query(order_q, ("Pending", total_amount, payment_method, now, st.session_state.user_id), fetch=False, commit=True)
     
     if order_id:
         # 2. Insert into order_items table
@@ -337,7 +360,6 @@ def process_checkout(total_amount, payment_method):
 def order_tracking():
     st.header("📋 Order Tracking Dashboard")
     
-    # Note: No indents for SELECT command
     orders_q = "SELECT * FROM orders ORDER BY created_at DESC LIMIT 50"
     orders = run_query(orders_q)
     
@@ -348,7 +370,6 @@ def order_tracking():
                 st.write(f"**Payment:** {order['payment_method']}")
                 
                 # Fetch items for this order
-                # Note: No indents for SELECT command
                 items_q = "SELECT o.quantity, m.name FROM order_items o JOIN menu_items m ON o.menu_items_id = m.menu_items_id WHERE o.order_id = %s"
                 items = run_query(items_q, (order['order_id'],))
                 if items:
@@ -399,17 +420,16 @@ def admin_dashboard():
             query_top = "SELECT m.name, SUM(o.quantity) as total_sold FROM order_items o JOIN menu_items m ON o.menu_items_id = m.menu_items_id JOIN orders ord ON o.order_id = ord.order_id WHERE ord.status = 'Completed' GROUP BY m.menu_items_id ORDER BY total_sold DESC LIMIT 5"
             top_items = run_query(query_top)
             if top_items:
+                import altair as alt
                 df_top = pd.DataFrame(top_items)
-                st.bar_chart(df_top.set_index('name'))
+                df_top['total_sold'] = df_top['total_sold'].astype(int)
+                chart = alt.Chart(df_top).mark_bar().encode(
+                    x=alt.X('total_sold:Q', title='Units Sold'),
+                    y=alt.Y('name:N', sort='-x', title=None)
+                )
+                st.altair_chart(chart, use_container_width=True)
             else:
                 st.info("No completed sales data yet.")
-                
-        with col_chart2:
-            st.subheader("Order Status Distribution")
-            status_counts = df_orders['status'].value_counts()
-            st.bar_chart(status_counts)
-    else:
-        st.info("No orders data available yet.")
 
 # ==========================================
 # 8. MODULE F: USER MANAGEMENT (ADMIN)
