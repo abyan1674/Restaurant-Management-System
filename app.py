@@ -1,13 +1,12 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
-from mysql.connector import Error
-import hashlib
 import datetime
 import uuid
 import altair as alt
 import os
 from typing import Any, Optional, List, Dict
+from db import DB_CONFIG, create_connection, run_query
+from logic import hash_password, calculate_cart_total, get_loyalty_tier, calculate_order_total
 
 # ==========================================
 # 0. FORCE LIGHT THEME (WHITE BACKGROUND)
@@ -29,47 +28,7 @@ except Exception:
 # ==========================================
 # 1. DATABASE CONFIGURATION & HELPERS
 # ==========================================
-DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",       # Update with your MySQL username
-    "password": "",       # Update with your MySQL password
-    "database": "restaurant_management"
-}
-
-def create_connection():
-    try:
-        connection = mysql.connector.connect(**DB_CONFIG)
-        return connection
-    except Error as e:
-        st.error(f"Database connection failed: {e}")
-        return None
-
-def run_query(query: str, params: Optional[tuple] = None, fetch: bool = True, commit: bool = False) -> Any:
-    """
-    Generic DB executor.
-    - If commit=True (INSERT/UPDATE/DELETE): returns lastrowid (int) or None
-    - If fetch=True (SELECT): returns list of dicts or None
-    """
-    conn = create_connection()
-    if conn is None:
-        return None
-    
-    cursor = conn.cursor(dictionary=True)
-    result: Any = None
-    try:
-        # Use empty tuple instead of None to satisfy the type checker
-        cursor.execute(query, params if params is not None else ())
-        if commit:
-            conn.commit()
-            result = cursor.lastrowid
-        elif fetch:
-            result = cursor.fetchall()
-    except Exception as e:
-        st.error(f"Database Error: {e}")
-    finally:
-        cursor.close()
-        conn.close()
-    return result
+# DB_CONFIG, create_connection, and run_query are imported from db.py
 
 # ==========================================
 # 2. SESSION STATE INITIALIZATION
@@ -90,9 +49,7 @@ if 'current_page' not in st.session_state:
 # ==========================================
 # 3. MODULE A: AUTHENTICATION
 # ==========================================
-def hash_password(password):
-    # Standard fallback, though your DB might use a specific hashing algorithm
-    return hashlib.md5(password.encode()).hexdigest()
+# hash_password is imported from logic.py
 
 def login_page():
     st.title("🍽️ Restaurant Management System")
@@ -609,13 +566,9 @@ def customer_dashboard():
     total_orders = stats[0]['total_orders'] if stats and stats[0]['total_orders'] else 0
     lifetime_spent = float(stats[0]['lifetime_spent']) if stats and stats[0]['lifetime_spent'] else 0.0
     
-    # Calculate Loyalty Tier
-    if lifetime_spent >= 150:
-        tier, color = "🥇 Gold VIP", "gold"
-    elif lifetime_spent >= 50:
-        tier, color = "🥈 Silver Gourmand", "silver"
-    else:
-        tier, color = "🥉 Bronze Foodie", "#cd7f32" # Bronze color
+    tier_label = get_loyalty_tier(lifetime_spent)
+    tier_icons = {"Gold VIP": ("🥇 Gold VIP", "gold"), "Silver Gourmand": ("🥈 Silver Gourmand", "silver"), "Bronze Foodie": ("🥉 Bronze Foodie", "#cd7f32")}
+    tier, color = tier_icons[tier_label]
         
     c1, c2, c3 = st.columns(3)
     c1.metric("Lifetime Spent 💰", f"${lifetime_spent:.2f}")
