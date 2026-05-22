@@ -3,8 +3,28 @@ import pandas as pd
 import mysql.connector
 from mysql.connector import Error
 import hashlib
-import os
 import datetime
+import uuid
+import altair as alt
+import os
+from typing import Any, Optional, List, Dict
+
+# ==========================================
+# 0. FORCE LIGHT THEME (WHITE BACKGROUND)
+# ==========================================
+# This automatically creates a Streamlit config file to force a white theme.
+# Using absolute paths and a try-except block to avoid Windows FileNotFoundError
+try:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    st_dir = os.path.join(base_dir, ".streamlit")
+    if not os.path.exists(st_dir):
+        os.makedirs(st_dir, exist_ok=True)
+    st_config_path = os.path.join(st_dir, "config.toml")
+    if not os.path.exists(st_config_path):
+        with open(st_config_path, "w") as f:
+            f.write("[theme]\nbase=\"light\"\n")
+except Exception:
+    pass # Silently fail so the app continues to run even if folder creation is blocked
 
 # ==========================================
 # 1. DATABASE CONFIGURATION & HELPERS
@@ -24,19 +44,25 @@ def create_connection():
         st.error(f"Database connection failed: {e}")
         return None
 
-def run_query(query, params=None, fetch=True, commit=False):
+def run_query(query: str, params: Optional[tuple] = None, fetch: bool = True, commit: bool = False) -> Any:
+    """
+    Generic DB executor.
+    - If commit=True (INSERT/UPDATE/DELETE): returns lastrowid (int) or None
+    - If fetch=True (SELECT): returns list of dicts or None
+    """
     conn = create_connection()
     if conn is None:
         return None
     
     cursor = conn.cursor(dictionary=True)
-    result = None
+    result: Any = None
     try:
-        cursor.execute(query, params)
+        # Use empty tuple instead of None to satisfy the type checker
+        cursor.execute(query, params if params is not None else ())
         if commit:
             conn.commit()
             result = cursor.lastrowid
-        if fetch:
+        elif fetch:
             result = cursor.fetchall()
     except Exception as e:
         st.error(f"Database Error: {e}")
@@ -58,6 +84,8 @@ if 'role' not in st.session_state:
     st.session_state.role = None
 if 'cart' not in st.session_state:
     st.session_state.cart = {} # Format: {menu_item_id: {'name': str, 'price': float, 'qty': int}}
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "POS System"
 
 # ==========================================
 # 3. MODULE A: AUTHENTICATION
@@ -98,28 +126,19 @@ def login_page():
     st.divider()
     st.subheader("No Account?")
     if st.button("Continue as Guest / Customer", use_container_width=True):
-        query_guest = "SELECT * FROM users WHERE username = 'Guest' LIMIT 1"
-        guests = run_query(query_guest)
-        
-        if guests:
-            user = guests[0]
+        guest_num = str(uuid.uuid4().int)[:4]
+        unique_name = f"guest_{guest_num}"
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        insert_g = "INSERT INTO users (username, password_hash, role, created_at) VALUES (%s, %s, %s, %s)"
+        guest_id = run_query(insert_g, (unique_name, hash_password('guest_pass_123'), 'guest', now), fetch=False, commit=True)
+        if guest_id:
             st.session_state.logged_in = True
-            st.session_state.user_id = user['user_id']
-            st.session_state.username = user['username']
-            st.session_state.role = user['role']
+            st.session_state.user_id = guest_id
+            st.session_state.username = 'Guest'
+            st.session_state.role = 'guest'
             st.rerun()
         else:
-            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            insert_g = "INSERT INTO users (username, password_hash, role, created_at) VALUES (%s, %s, %s, %s)"
-            guest_id = run_query(insert_g, ('Guest', hash_password('guest_pass_123'), 'customer', now), fetch=False, commit=True)
-            if guest_id:
-                st.session_state.logged_in = True
-                st.session_state.user_id = guest_id
-                st.session_state.username = 'Guest'
-                st.session_state.role = 'customer'
-                st.rerun()
-            else:
-                st.error("Failed to create guest session.")
+            st.error("Failed to create guest session.")
 
 def logout():
     st.session_state.logged_in = False
@@ -127,6 +146,7 @@ def logout():
     st.session_state.username = None
     st.session_state.role = None
     st.session_state.cart = {}
+    st.session_state.current_page = "POS System"
     st.rerun()
 
 # ==========================================
@@ -183,7 +203,7 @@ def admin_menu_management():
         menu_items = run_query(menu_query)
         if menu_items:
             df_menu = pd.DataFrame(menu_items)
-            st.dataframe(df_menu, use_container_width=True)
+            st.dataframe(df_menu)
 
     # --- TAB 2: CATEGORIES ---
     with tab2:
@@ -279,19 +299,19 @@ def pos_system():
                         if pd.notna(img_url) and img_url:
                             try:
                                 if str(img_url).startswith('http'):
-                                    st.image(img_url, use_container_width=True)
+                                    st.image(img_url, use_column_width=True)
                                     image_rendered = True
                                 else:
                                     local_path = f"static{img_url}"
                                     if os.path.exists(local_path):
-                                        st.image(local_path, use_container_width=True)
+                                        st.image(local_path, use_column_width=True)
                                         image_rendered = True
                             except Exception:
                                 pass # Silently skip if image rendering fails
                         
                         # Fallback image if nothing was rendered
                         if not image_rendered:
-                            st.image("https://placehold.co/400x300?text=No+Image+Available", use_container_width=True)
+                            st.image("https://placehold.co/400x300?text=No+Image+Available", use_column_width=True)
                         
                         st.markdown(f"**{row['name']}**")
                         st.caption(f"${row['price']:.2f}")
@@ -323,11 +343,52 @@ def pos_system():
             if st.button("Complete Order 🚀", type="primary", use_container_width=True):
                 process_checkout(total_amount, pay_method)
 
-def add_to_cart(item_id, name, price):
+        st.divider()
+        st.subheader("🧾 Today's Orders")
+
+        # Query orders placed by this user today
+        today_q = """
+            SELECT order_id, total_amount, status, created_at
+            FROM orders
+            WHERE user_id = %s AND DATE(created_at) = CURDATE()
+            ORDER BY created_at DESC
+        """
+        today_orders = run_query(today_q, (st.session_state.user_id,))
+
+        if today_orders:
+            # Calculate total spent today
+            today_total = sum(float(order['total_amount']) for order in today_orders)
+            st.markdown(f"**Total Spent Today: ${today_total:.2f}**")
+
+            # Show simple list of today's receipts
+            for order in today_orders:
+                with st.expander(f"Order #{order['order_id']} | ${order['total_amount']} ({order['status']})"):
+                    # Get items inside this specific order
+                    items_q = """
+                        SELECT m.name, oi.quantity
+                        FROM order_items oi
+                        JOIN menu_items m ON oi.menu_items_id = m.menu_items_id
+                        WHERE oi.order_id = %s
+                    """
+                    order_items = run_query(items_q, (order['order_id'],))
+                    if order_items:
+                        for item in order_items:
+                            st.write(f"- {item['quantity']}x {item['name']}")
+        else:
+            st.caption("No orders placed today yet.")
+
+def add_to_cart(item_id, name, price, redirect_to=None):
+    """
+    Adds an item to cart. If redirect_to is provided, switches page before rerun.
+    """
     if item_id in st.session_state.cart:
         st.session_state.cart[item_id]['qty'] += 1
     else:
         st.session_state.cart[item_id] = {'name': name, 'price': float(price), 'qty': 1}
+    
+    if redirect_to:
+        st.session_state.current_page = redirect_to
+    
     st.rerun()
 
 def remove_from_cart(item_id):
@@ -420,7 +481,6 @@ def admin_dashboard():
             query_top = "SELECT m.name, SUM(o.quantity) as total_sold FROM order_items o JOIN menu_items m ON o.menu_items_id = m.menu_items_id JOIN orders ord ON o.order_id = ord.order_id WHERE ord.status = 'Completed' GROUP BY m.menu_items_id ORDER BY total_sold DESC LIMIT 5"
             top_items = run_query(query_top)
             if top_items:
-                import altair as alt
                 df_top = pd.DataFrame(top_items)
                 df_top['total_sold'] = df_top['total_sold'].astype(int)
                 chart = alt.Chart(df_top).mark_bar().encode(
@@ -430,6 +490,71 @@ def admin_dashboard():
                 st.altair_chart(chart, use_container_width=True)
             else:
                 st.info("No completed sales data yet.")
+        
+        with col_chart2:
+            st.subheader("⏰ Peak Hours (Rush Tracker)")
+            query_peak = """
+                SELECT HOUR(created_at) as hour_of_day, COUNT(order_id) as total_orders 
+                FROM orders 
+                WHERE status = 'Completed' 
+                GROUP BY HOUR(created_at) 
+                ORDER BY hour_of_day
+            """
+            peak_data = run_query(query_peak)
+            if peak_data:
+                df_peak = pd.DataFrame(peak_data)
+                # Format hour to look nice (e.g., "14:00")
+                df_peak['Hour'] = df_peak['hour_of_day'].apply(lambda x: f"{x:02d}:00")
+                df_peak = df_peak.set_index('Hour')
+                # Use Streamlit's built-in bar chart for simplicity
+                st.bar_chart(df_peak['total_orders'], color="#FF4B4B")
+            else:
+                st.info("Not enough data to track peak hours.")
+        
+        st.divider()
+        
+        # --- REVENUE TREND & VIP CUSTOMERS ---
+        col_bottom1, col_bottom2 = st.columns([7, 3])
+        
+        with col_bottom1:
+            st.subheader("📈 Daily Revenue Trend")
+            query_trend = """
+                SELECT DATE(created_at) as order_date, SUM(total_amount) as daily_revenue 
+                FROM orders 
+                WHERE status = 'Completed' 
+                GROUP BY DATE(created_at) 
+                ORDER BY order_date
+            """
+            trend_data = run_query(query_trend)
+            if trend_data:
+                df_trend = pd.DataFrame(trend_data)
+                df_trend['order_date'] = pd.to_datetime(df_trend['order_date'])
+                df_trend = df_trend.set_index('order_date')
+                st.line_chart(df_trend['daily_revenue'], color="#00C853")
+            else:
+                st.info("Not enough data for a revenue trend.")
+                
+        with col_bottom2:
+            st.subheader("👑 VIP Customers")
+            query_vips = """
+                SELECT u.username, SUM(o.total_amount) as total_spent 
+                FROM orders o 
+                JOIN users u ON o.user_id = u.user_id 
+                WHERE o.status = 'Completed' AND u.username NOT LIKE 'Guest_%' AND u.username != 'Guest'
+                GROUP BY u.user_id 
+                ORDER BY total_spent DESC LIMIT 5
+            """
+            vips_data = run_query(query_vips)
+            if vips_data:
+                df_vips = pd.DataFrame(vips_data)
+                df_vips.rename(columns={'username': 'Customer', 'total_spent': 'Total Spent ($)'}, inplace=True)
+                # Convert to float to ensure two decimal places
+                df_vips['Total Spent ($)'] = df_vips['Total Spent ($)'].astype(float).map("{:.2f}".format)
+                st.dataframe(df_vips, hide_index=True, use_container_width=True)
+            else:
+                st.info("No VIP data yet.")
+    else:
+        st.info("No orders found in the database yet.")
 
 # ==========================================
 # 8. MODULE F: USER MANAGEMENT (ADMIN)
@@ -447,7 +572,7 @@ def admin_user_management():
         
         if users:
             df_users = pd.DataFrame(users)
-            st.dataframe(df_users, use_container_width=True)
+            st.dataframe(df_users)
             
     with tab2:
         st.subheader("Create Staff/Admin Account")
@@ -466,6 +591,89 @@ def admin_user_management():
                 st.rerun()
 
 # ==========================================
+# 9. MODULE G: CUSTOMER DASHBOARD (DINING DIARY)
+# ==========================================
+def customer_dashboard():
+    st.header("📔 Customer Dashboard")
+    st.write("Welcome to your personal food journey!")
+    
+    user_id = st.session_state.user_id
+    
+    # --- 1. AT A GLANCE STATS & LOYALTY TIER ---
+    stats_q = """
+        SELECT COUNT(order_id) as total_orders, SUM(total_amount) as lifetime_spent 
+        FROM orders WHERE user_id = %s AND status != 'Cancelled'
+    """
+    stats = run_query(stats_q, (user_id,))
+    
+    total_orders = stats[0]['total_orders'] if stats and stats[0]['total_orders'] else 0
+    lifetime_spent = float(stats[0]['lifetime_spent']) if stats and stats[0]['lifetime_spent'] else 0.0
+    
+    # Calculate Loyalty Tier
+    if lifetime_spent >= 150:
+        tier, color = "🥇 Gold VIP", "gold"
+    elif lifetime_spent >= 50:
+        tier, color = "🥈 Silver Gourmand", "silver"
+    else:
+        tier, color = "🥉 Bronze Foodie", "#cd7f32" # Bronze color
+        
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Lifetime Spent 💰", f"${lifetime_spent:.2f}")
+    c2.metric("Total Visits 🏃", total_orders)
+    c3.markdown(f"**Loyalty Tier:**\n### <span style='color:{color}'>{tier}</span>", unsafe_allow_html=True)
+    
+    st.divider()
+
+    # --- 2. YOUR GO-TO DISH ---
+    st.subheader("❤️ Your Go-To Dish")
+    fav_q = """
+        SELECT m.menu_items_id, m.name, m.price, SUM(oi.quantity) as times_ordered 
+        FROM order_items oi 
+        JOIN orders o ON oi.order_id = o.order_id 
+        JOIN menu_items m ON oi.menu_items_id = m.menu_items_id 
+        WHERE o.user_id = %s 
+        GROUP BY m.menu_items_id, m.name, m.price 
+        ORDER BY times_ordered DESC LIMIT 1
+    """
+    favorite = run_query(fav_q, (user_id,))
+    
+    if favorite and favorite[0]['times_ordered'] > 0:
+        fav_item = favorite[0]
+        col_text, col_btn = st.columns([3, 1])
+        with col_text:
+            st.success(f"You really love **{fav_item['name']}**! You've ordered it **{int(fav_item['times_ordered'])} times**.")
+        with col_btn:
+            if st.button(f"Order it again! (${fav_item['price']})", type="primary"):
+                # Use the redirect_to parameter to switch page AND add to cart in one go
+                add_to_cart(
+                    fav_item['menu_items_id'],
+                    fav_item['name'],
+                    fav_item['price'],
+                    redirect_to="POS System"
+                )
+    else:
+        st.info("You haven't ordered enough yet for us to find your favorite dish. Time to explore the menu!")
+
+    st.divider()
+
+    # --- 3. FULL ORDER HISTORY ---
+    st.subheader("📜 Full Receipt Book")
+    history_q = "SELECT order_id, created_at, total_amount, payment_method, status FROM orders WHERE user_id = %s ORDER BY created_at DESC"
+    history = run_query(history_q, (user_id,))
+    
+    if history:
+        df_history = pd.DataFrame(history)
+        df_history.rename(columns={
+            'order_id': 'Order #', 'created_at': 'Date', 
+            'total_amount': 'Total ($)', 'payment_method': 'Payment', 'status': 'Status'
+        }, inplace=True)
+        # Display as a clean, read-only table
+        st.dataframe(df_history, use_container_width=True, hide_index=True)
+    else:
+        st.write("No past orders found.")
+
+
+# ==========================================
 # MAIN APP ROUTING
 # ==========================================
 def main():
@@ -480,6 +688,9 @@ def main():
             st.divider()
             
             nav_options = ["POS System"]
+
+            if st.session_state.role in ['customer']:
+                nav_options.append("Customer Dashboard") 
             
             if st.session_state.role in ['admin', 'staff']:
                 nav_options.append("Order Tracking")
@@ -487,14 +698,22 @@ def main():
             if st.session_state.role == 'admin':
                 nav_options.extend(["Admin Menu Management", "Admin Dashboard", "Admin User Management"])
                 
-            page = st.radio("Navigation", nav_options)
+            st.subheader("Navigation")
+            for option in nav_options:
+                btn_type = "primary" if st.session_state.current_page == option else "secondary"
+                if st.button(option, use_container_width=True, type=btn_type):
+                    st.session_state.current_page = option
             
             st.divider()
-            if st.button("Logout"):
+            if st.button("Logout", use_container_width=True):
                 logout()
                 
+        page = st.session_state.current_page
+        
         if page == "POS System":
             pos_system()
+        elif page == "Customer Dashboard" and st.session_state.role in ['customer']:
+            customer_dashboard()
         elif page == "Order Tracking" and st.session_state.role in ['admin', 'staff']:
             order_tracking()
         elif page == "Admin Menu Management" and st.session_state.role == 'admin':
